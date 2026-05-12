@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchLists } from "../api/lists.js";
 import { createTask, deleteTask, fetchTasks, patchTask } from "../api/tasks.js";
+import { sortTasksLikeApi } from "../utils/tasks.js";
 import { AlertModal } from "../components/Modal.jsx";
 import { AddTaskForm } from "../components/AddTaskForm.jsx";
 import { TaskItem } from "../components/TaskItem.jsx";
@@ -27,7 +28,7 @@ export function Home() {
     setLoading(true);
     try {
       const [taskData, lists] = await Promise.all([fetchTasks(listIdNum), fetchLists()]);
-      setTasks(taskData);
+      setTasks(sortTasksLikeApi(taskData));
       const title = lists.find((l) => l.id === listIdNum)?.name ?? "";
       setListTitle(title);
     } catch (e) {
@@ -51,11 +52,13 @@ export function Home() {
     loadAll();
   }, [loadAll]);
 
-  async function handleAdd(title) {
+  async function handleAdd(title, dueDate) {
     setError(null);
     try {
-      const task = await createTask({ title, listId: listIdNum });
-      setTasks((prev) => [...prev, task]);
+      const payload = { title, listId: listIdNum };
+      if (dueDate) payload.dueDate = dueDate;
+      const task = await createTask(payload);
+      setTasks((prev) => sortTasksLikeApi([...prev, task]));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не вдалося створити задачу");
     }
@@ -65,7 +68,7 @@ export function Home() {
     setError(null);
     try {
       const updated = await patchTask(task.id, { is_done: !task.is_done });
-      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      setTasks((prev) => sortTasksLikeApi(prev.map((t) => (t.id === updated.id ? updated : t))));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не вдалося оновити задачу");
     }
@@ -75,9 +78,21 @@ export function Home() {
     setError(null);
     try {
       const updated = await patchTask(task.id, { title });
-      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      setTasks((prev) => sortTasksLikeApi(prev.map((t) => (t.id === updated.id ? updated : t))));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не вдалося зберегти назву");
+    }
+  }
+
+  async function handleSaveDueDate(task, dueDate) {
+    setError(null);
+    try {
+      const updated = await patchTask(task.id, { due_date: dueDate });
+      setTasks((prev) => sortTasksLikeApi(prev.map((t) => (t.id === updated.id ? updated : t))));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Не вдалося зберегти термін";
+      setError(msg);
+      throw e;
     }
   }
 
@@ -94,7 +109,9 @@ export function Home() {
   return (
     <div className="px-4 py-8 sm:px-6">
       <h1 className="text-2xl font-semibold text-ms-text">{listTitle || "Задачі"}</h1>
-      <p className="mt-1 text-sm text-ms-muted">Створюйте, позначайте виконані та видаляйте в межах обраного списку.</p>
+      <p className="mt-1 text-sm text-ms-muted">
+        Термін у форматі дати; список сортується за дедлайном (без дати — в кінці). Прострочені підсвічуються.
+      </p>
 
       <AddTaskForm onAdd={handleAdd} disabled={loading || !Number.isFinite(listIdNum) || listIdNum <= 0} />
 
@@ -113,6 +130,7 @@ export function Home() {
                 task={task}
                 onToggle={() => handleToggleDone(task)}
                 onSaveTitle={(title) => handleSaveTitle(task, title)}
+                onSaveDueDate={(due) => handleSaveDueDate(task, due)}
                 onDelete={() => handleDelete(task.id)}
               />
             ))

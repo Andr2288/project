@@ -2,7 +2,7 @@ from flask import jsonify, request, session
 
 from models.database import get_db
 from models.lists import get_list
-from models.tasks import create_task, delete_task, list_tasks, update_task
+from models.tasks import create_task, delete_task, list_tasks, normalize_due_date, update_task
 
 from . import api_bp
 from .decorators import login_required
@@ -41,12 +41,23 @@ def tasks_create():
     if not isinstance(list_id, int):
         return jsonify({"error": "Поле list_id обов'язкове (число)"}), 400
 
+    due_date = None
+    if "due_date" in data:
+        raw = data.get("due_date")
+        if raw is None or raw == "":
+            due_date = None
+        else:
+            try:
+                due_date = normalize_due_date(raw)
+            except ValueError as e:
+                return jsonify({"error": str(e)}), 400
+
     db = get_db()
     uid = _current_user_id()
     if get_list(db, uid, list_id) is None:
         return jsonify({"error": "Список не знайдено"}), 404
 
-    task = create_task(db, uid, list_id, title)
+    task = create_task(db, uid, list_id, title, due_date=due_date)
     return jsonify(task), 201
 
 
@@ -56,17 +67,37 @@ def tasks_patch(task_id):
     data = request.get_json(silent=True) or {}
     title = data.get("title", None)
     is_done = data.get("is_done", None)
+    has_due = "due_date" in data
 
     if title is not None and not isinstance(title, str):
         return jsonify({"error": "title має бути рядком"}), 400
     if is_done is not None and not isinstance(is_done, bool):
         return jsonify({"error": "is_done має бути true або false"}), 400
-    if title is None and is_done is None:
+
+    due_kw = {}
+    if has_due:
+        raw = data.get("due_date")
+        if raw is None or raw == "":
+            due_kw["due_date"] = None
+        else:
+            try:
+                due_kw["due_date"] = normalize_due_date(raw)
+            except ValueError as e:
+                return jsonify({"error": str(e)}), 400
+
+    if title is None and is_done is None and not has_due:
         return jsonify({"error": "Немає полів для оновлення"}), 400
 
     db = get_db()
     try:
-        task = update_task(db, _current_user_id(), task_id, title=title, is_done=is_done)
+        task = update_task(
+            db,
+            _current_user_id(),
+            task_id,
+            title=title,
+            is_done=is_done,
+            **due_kw,
+        )
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 

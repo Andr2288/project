@@ -5,12 +5,14 @@ export function fetchTasks(listId) {
   return fetch(`${base}/api/tasks?${q}`, { ...fetchDefaults }).then(parseResponse);
 }
 
-export function createTask({ title, listId }) {
+export function createTask({ title, listId, dueDate }) {
+  const body = { title, list_id: listId };
+  if (dueDate) body.due_date = dueDate;
   return fetch(`${base}/api/tasks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     ...fetchDefaults,
-    body: JSON.stringify({ title, list_id: listId }),
+    body: JSON.stringify(body),
   }).then(parseResponse);
 }
 

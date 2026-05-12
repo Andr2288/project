@@ -59,6 +59,7 @@ def init_db():
                 list_id INTEGER NOT NULL,
                 title TEXT NOT NULL,
                 is_done INTEGER NOT NULL DEFAULT 0,
+                due_date TEXT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (list_id) REFERENCES task_lists(id) ON DELETE CASCADE
@@ -86,4 +87,6 @@ def init_db():
                     (lid, uid),
                 )
             db.execute("DELETE FROM tasks WHERE list_id IS NULL")
+        if "due_date" not in cols:
+            db.execute("ALTER TABLE tasks ADD COLUMN due_date TEXT")
     db.commit()
