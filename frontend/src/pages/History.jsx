@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { fetchActivity } from "../api/activity.js";
 import { AlertModal } from "../components/Modal.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { formatDateTimeKyiv, toIsoUtcAttribute } from "../utils/datetime.js";
 
 const ACTION_LABELS = {
   register: "Реєстрація",
@@ -17,20 +18,6 @@ const ACTION_LABELS = {
   task_update: "Задача",
   task_delete: "Задача",
 };
-
-function formatWhen(isoLike) {
-  if (!isoLike) return "";
-  const normalized = isoLike.includes("T") ? isoLike : isoLike.replace(" ", "T");
-  const d = new Date(normalized);
-  if (Number.isNaN(d.getTime())) return isoLike;
-  return d.toLocaleString("uk-UA", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export function HistoryPage() {
   const { logout } = useAuth();
@@ -100,7 +87,7 @@ export function HistoryPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
           <div className="flex w-full shrink-0 flex-col gap-1 sm:w-[13.5rem]">
             <label htmlFor="hist-day" className="text-xs font-medium leading-tight text-ms-muted">
-              День
+              День (Europe/Kyiv)
             </label>
             <input
               id="hist-day"
@@ -145,9 +132,9 @@ export function HistoryPage() {
             <li key={row.id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-start sm:gap-4">
               <time
                 className="shrink-0 text-xs text-ms-muted sm:w-36 sm:pt-0.5"
-                dateTime={row.created_at}
+                dateTime={toIsoUtcAttribute(row.created_at)}
               >
-                {formatWhen(row.created_at)}
+                {formatDateTimeKyiv(row.created_at)}
               </time>
               <div className="min-w-0 flex-1">
                 <span className="mb-1 inline-block rounded bg-ms-canvas px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-ms-muted">

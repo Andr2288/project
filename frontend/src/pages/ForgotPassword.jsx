@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { forgotPassword } from "../api/auth.js";
+import { formatDateTimeKyiv } from "../utils/datetime.js";
 import { AlertModal, Modal } from "../components/Modal.jsx";
 import { btnPrimaryClass, fieldClass } from "../components/authStyles.js";
 
@@ -32,10 +33,6 @@ export function ForgotPasswordPage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
       <h1 className="text-2xl font-semibold text-ms-text">Відновлення пароля (демо)</h1>
-      <p className="mt-2 text-sm text-ms-muted">
-        У реальному застосунку на email надіслали б посилання. Тут токен показується на екрані лише для
-        навчальної симуляції.
-      </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
@@ -98,12 +95,14 @@ export function ForgotPasswordPage() {
             {result.note ? <p className="text-ms-muted">{result.note}</p> : null}
             {result.reset_token ? (
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-ms-muted">Токен (демо)</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-ms-muted">Токен</p>
                 <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-ms-border bg-ms-surface p-2 text-xs">
                   {result.reset_token}
                 </pre>
                 {result.expires_at ? (
-                  <p className="mt-2 text-xs text-ms-muted">Дійсний до (серверний час): {result.expires_at}</p>
+                  <p className="mt-2 text-xs text-ms-muted">
+                    Дійсний до: {formatDateTimeKyiv(result.expires_at)}
+                  </p>
                 ) : null}
               </div>
             ) : null}

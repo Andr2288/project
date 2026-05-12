@@ -88,6 +88,9 @@ def auth_login():
     session.permanent = True
     log_activity(db, user["id"], "login", "Вхід у систему")
     return jsonify({"user": user})
+
+
+@api_bp.post("/auth/logout")
 def auth_logout():
     uid = session.get("user_id")
     db = get_db()
@@ -101,7 +104,6 @@ def auth_logout():
 def auth_forgot_password():
     """
     Демо: токен повертається в JSON замість листа.
-    У продакшні токен надсилали б лише на email і не показували в API.
     """
     data = request.get_json(silent=True) or {}
     username = data.get("username", "")
@@ -135,7 +137,7 @@ def auth_forgot_password():
 
     return jsonify(
         {
-            "message": "Демо-режим: замість листа токен показано тут. У продакшні його не повертали б у відповіді.",
+            "message": "Демо-режим: замість листа токен показано тут.",
             "reset_token": token,
             "simulation": True,
             "expires_at": expires_at,

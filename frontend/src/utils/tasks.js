@@ -1,4 +1,8 @@
+import { todayISO } from "./datetime.js";
+
 const PRI_ORDER = { low: 0, medium: 1, high: 2 };
+
+export { formatDueUk, todayISO } from "./datetime.js";
 
 /** Сортування як на бекенді: дедлайн → пріоритет (вищий перший) → id. */
 export function sortTasksLikeApi(tasks) {
@@ -13,24 +17,6 @@ export function sortTasksLikeApi(tasks) {
     const bp = PRI_ORDER[b.priority] ?? 1;
     if (ap !== bp) return bp - ap;
     return a.id - b.id;
-  });
-}
-
-export function todayISO() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-export function formatDueUk(iso) {
-  if (!iso) return "";
-  const [y, mo, da] = iso.split("-").map(Number);
-  return new Date(y, mo - 1, da).toLocaleDateString("uk-UA", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
   });
 }
 

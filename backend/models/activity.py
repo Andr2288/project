@@ -1,8 +1,12 @@
 import re
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SUMMARY_MAX = 1000
 _DEFAULT_LIMIT = 500
+_KYIV = ZoneInfo("Europe/Kyiv")
+_UTC = ZoneInfo("UTC")
 
 
 def log_activity(db, user_id, action, summary):
@@ -23,9 +27,29 @@ def _validate_day(value):
     return value
 
 
+def _kyiv_day_utc_bounds(day_str: str) -> tuple[str, str]:
+    """
+    Межі [start, end) у UTC як рядки YYYY-MM-DD HH:MM:SS (як у SQLite datetime('now')).
+    day_str — календарна дата в Europe/Kyiv (відповідає фільтру на фронті та показу часу).
+    """
+    try:
+        d = datetime.strptime(day_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise ValueError("date має бути у форматі РРРР-ММ-ДД") from None
+    start_kyiv = datetime(d.year, d.month, d.day, 0, 0, 0, tzinfo=_KYIV)
+    end_kyiv = start_kyiv + timedelta(days=1)
+    start_utc = start_kyiv.astimezone(_UTC).replace(tzinfo=None)
+    end_utc = end_kyiv.astimezone(_UTC).replace(tzinfo=None)
+    return (
+        start_utc.strftime("%Y-%m-%d %H:%M:%S"),
+        end_utc.strftime("%Y-%m-%d %H:%M:%S"),
+    )
+
+
 def list_user_activity(db, user_id, day=None, search=None, limit=_DEFAULT_LIMIT):
     """
-    day — один календарний день (РРРР-ММ-ДД); якщо None, повертаються записи за весь час (у межах limit).
+    day — один календарний день (РРРР-ММ-ДД) у часовій зоні Europe/Kyiv; якщо None — усі записи (у межах limit).
+    created_at у БД — UTC; фільтр узгоджений із київською добою.
     search — підрядок у summary без урахування регістру.
     """
     day = _validate_day(day)
@@ -38,8 +62,11 @@ def list_user_activity(db, user_id, day=None, search=None, limit=_DEFAULT_LIMIT)
     params = [user_id]
 
     if day:
-        wh.append("DATE(created_at) = DATE(?)")
-        params.append(day)
+        start_utc_s, end_utc_s = _kyiv_day_utc_bounds(day)
+        wh.append(
+            "datetime(created_at) >= datetime(?) AND datetime(created_at) < datetime(?)"
+        )
+        params.extend([start_utc_s, end_utc_s])
     if search and search.strip():
         wh.append("LOWER(summary) LIKE '%' || LOWER(?) || '%'")
         params.append(search.strip())
