@@ -1,6 +1,7 @@
 from flask import jsonify, request, session
 
 from models.database import get_db
+from models.lists import get_list
 from models.tasks import create_task, delete_task, list_tasks, update_task
 
 from . import api_bp
@@ -19,8 +20,14 @@ def _current_user_id():
 @api_bp.get("/tasks")
 @login_required
 def tasks_list():
+    list_id = request.args.get("list_id", type=int)
+    if list_id is None:
+        return jsonify({"error": "Потрібен query-параметр list_id"}), 400
     db = get_db()
-    return jsonify(list_tasks(db, _current_user_id()))
+    uid = _current_user_id()
+    if get_list(db, uid, list_id) is None:
+        return jsonify({"error": "Список не знайдено"}), 404
+    return jsonify(list_tasks(db, uid, list_id))
 
 
 @api_bp.post("/tasks")
@@ -28,11 +35,18 @@ def tasks_list():
 def tasks_create():
     data = request.get_json(silent=True) or {}
     title = data.get("title", "")
+    list_id = data.get("list_id")
     if not isinstance(title, str) or not title.strip():
         return jsonify({"error": "Поле title обов'язкове"}), 400
+    if not isinstance(list_id, int):
+        return jsonify({"error": "Поле list_id обов'язкове (число)"}), 400
 
     db = get_db()
-    task = create_task(db, _current_user_id(), title)
+    uid = _current_user_id()
+    if get_list(db, uid, list_id) is None:
+        return jsonify({"error": "Список не знайдено"}), 404
+
+    task = create_task(db, uid, list_id, title)
     return jsonify(task), 201
 
 

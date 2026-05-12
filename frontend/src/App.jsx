@@ -1,8 +1,10 @@
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
+import { MainLayout } from "./layouts/MainLayout.jsx";
 import { ForgotPasswordPage } from "./pages/ForgotPassword.jsx";
 import { Home } from "./pages/Home.jsx";
+import { ListRedirect } from "./pages/ListRedirect.jsx";
 import { LoginPage } from "./pages/Login.jsx";
 import { RegisterPage } from "./pages/Register.jsx";
 import { ResetPasswordPage } from "./pages/ResetPassword.jsx";
@@ -17,13 +19,13 @@ function AppHeader() {
   }
 
   return (
-    <header className="border-b border-ms-border bg-ms-white shadow-sm">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+    <header className="shrink-0 border-b border-ms-border bg-ms-white shadow-sm">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <Link to="/" className="text-lg font-semibold text-ms-blue">
           Задачі
         </Link>
         <div className="flex items-center gap-4 text-sm">
-          <span className="hidden text-ms-muted sm:inline">Microsoft To Do — стиль</span>
+          <span className="hidden text-ms-muted md:inline">Microsoft To Do — стиль</span>
           {loading ? null : user ? (
             <div className="flex items-center gap-3">
               <span className="text-ms-text">{user.username}</span>
@@ -53,16 +55,19 @@ function AppHeader() {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-ms-canvas">
+    <div className="flex min-h-screen flex-col bg-ms-canvas">
       <AppHeader />
-      <main>
+      <main className="flex flex-1 flex-col">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<Home />} />
+            <Route path="/list/:listId" element={<MainLayout />}>
+              <Route index element={<Home />} />
+            </Route>
+            <Route path="/" element={<ListRedirect />} />
           </Route>
         </Routes>
       </main>

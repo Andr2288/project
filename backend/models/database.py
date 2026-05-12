@@ -35,6 +35,18 @@ def init_db():
         """
     )
 
+    db.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS task_lists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        """
+    )
+
     cur = db.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'",
     )
@@ -44,17 +56,34 @@ def init_db():
             CREATE TABLE tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
+                list_id INTEGER NOT NULL,
                 title TEXT NOT NULL,
                 is_done INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (list_id) REFERENCES task_lists(id) ON DELETE CASCADE
             );
             """,
         )
     else:
-        info = db.execute("PRAGMA table_info(tasks)").fetchall()
-        cols = {row[1] for row in info}
+        cols = {row[1] for row in db.execute("PRAGMA table_info(tasks)").fetchall()}
         if "user_id" not in cols:
             db.execute("ALTER TABLE tasks ADD COLUMN user_id INTEGER")
             db.execute("DELETE FROM tasks")
+        if "list_id" not in cols:
+            db.execute("ALTER TABLE tasks ADD COLUMN list_id INTEGER")
+            rows = db.execute(
+                "SELECT DISTINCT user_id FROM tasks WHERE user_id IS NOT NULL",
+            ).fetchall()
+            for (uid,) in rows:
+                db.execute(
+                    "INSERT INTO task_lists (user_id, name) VALUES (?, ?)",
+                    (uid, "Мої задачі"),
+                )
+                lid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+                db.execute(
+                    "UPDATE tasks SET list_id = ? WHERE user_id = ? AND list_id IS NULL",
+                    (lid, uid),
+                )
+            db.execute("DELETE FROM tasks WHERE list_id IS NULL")
     db.commit()

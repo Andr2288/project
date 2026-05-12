@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import { AlertModal } from "../components/Modal.jsx";
 import { btnPrimaryClass, fieldClass } from "../components/authStyles.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export function LoginPage() {
   const { user, login } = useAuth();
@@ -62,11 +63,6 @@ export function LoginPage() {
             disabled={busy}
           />
         </div>
-        {error ? (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        ) : null}
         <button type="submit" className={btnPrimaryClass} disabled={busy || !username.trim() || !password}>
           Увійти
         </button>
@@ -83,6 +79,8 @@ export function LoginPage() {
           Забули пароль?
         </Link>
       </p>
+
+      <AlertModal open={Boolean(error)} message={error || ""} onClose={() => setError(null)} />
     </div>
   );
 }

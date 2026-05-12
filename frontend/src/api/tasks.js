@@ -1,15 +1,16 @@
 import { base, fetchDefaults, parseResponse } from "./client.js";
 
-export function fetchTasks() {
-  return fetch(`${base}/api/tasks`, { ...fetchDefaults }).then(parseResponse);
+export function fetchTasks(listId) {
+  const q = new URLSearchParams({ list_id: String(listId) });
+  return fetch(`${base}/api/tasks?${q}`, { ...fetchDefaults }).then(parseResponse);
 }
 
-export function createTask({ title }) {
+export function createTask({ title, listId }) {
   return fetch(`${base}/api/tasks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     ...fetchDefaults,
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, list_id: listId }),
   }).then(parseResponse);
 }
 

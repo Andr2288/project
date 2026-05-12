@@ -1,44 +1,60 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { fetchLists } from "../api/lists.js";
 import { createTask, deleteTask, fetchTasks, patchTask } from "../api/tasks.js";
-import { useAuth } from "../context/AuthContext.jsx";
+import { AlertModal } from "../components/Modal.jsx";
 import { AddTaskForm } from "../components/AddTaskForm.jsx";
 import { TaskItem } from "../components/TaskItem.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export function Home() {
+  const { listId } = useParams();
+  const listIdNum = Number(listId);
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [listTitle, setListTitle] = useState("");
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadTasks = useCallback(async () => {
+  const loadAll = useCallback(async () => {
+    if (!Number.isFinite(listIdNum) || listIdNum <= 0) {
+      setError("Некоректний ідентифікатор списку");
+      setLoading(false);
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
-      const data = await fetchTasks();
-      setTasks(data);
+      const [taskData, lists] = await Promise.all([fetchTasks(listIdNum), fetchLists()]);
+      setTasks(taskData);
+      const title = lists.find((l) => l.id === listIdNum)?.name ?? "";
+      setListTitle(title);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Не вдалося завантажити задачі";
+      const msg = e instanceof Error ? e.message : "Не вдалося завантажити дані";
       if (msg === "Потрібна авторизація") {
         await logout();
         navigate("/login", { replace: true });
+        return;
+      }
+      if (msg.includes("не знайдено") || msg.includes("Список")) {
+        navigate("/", { replace: true });
         return;
       }
       setError(msg);
     } finally {
       setLoading(false);
     }
-  }, [logout, navigate]);
+  }, [listIdNum, logout, navigate]);
 
   useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+    loadAll();
+  }, [loadAll]);
 
   async function handleAdd(title) {
     setError(null);
     try {
-      const task = await createTask({ title });
+      const task = await createTask({ title, listId: listIdNum });
       setTasks((prev) => [...prev, task]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не вдалося створити задачу");
@@ -76,20 +92,11 @@ export function Home() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-ms-text">Мої задачі</h1>
-      <p className="mt-1 text-sm text-ms-muted">Створюйте, позначайте виконані та видаляйте.</p>
+    <div className="px-4 py-8 sm:px-6">
+      <h1 className="text-2xl font-semibold text-ms-text">{listTitle || "Задачі"}</h1>
+      <p className="mt-1 text-sm text-ms-muted">Створюйте, позначайте виконані та видаляйте в межах обраного списку.</p>
 
-      <AddTaskForm onAdd={handleAdd} disabled={loading} />
-
-      {error ? (
-        <div
-          className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-          role="alert"
-        >
-          {error}
-        </div>
-      ) : null}
+      <AddTaskForm onAdd={handleAdd} disabled={loading || !Number.isFinite(listIdNum) || listIdNum <= 0} />
 
       {loading ? (
         <p className="mt-6 text-sm text-ms-muted">Завантаження…</p>
@@ -97,7 +104,7 @@ export function Home() {
         <ul className="mt-6 space-y-2">
           {tasks.length === 0 ? (
             <li className="rounded-lg border border-dashed border-ms-border bg-ms-white px-4 py-8 text-center text-sm text-ms-muted shadow-card">
-              Поки немає задач. Додайте першу вище.
+              Поки немає задач у цьому списку. Додайте першу вище.
             </li>
           ) : (
             tasks.map((task) => (
@@ -112,6 +119,8 @@ export function Home() {
           )}
         </ul>
       )}
+
+      <AlertModal open={Boolean(error)} message={error || ""} onClose={() => setError(null)} />
     </div>
   );
 }

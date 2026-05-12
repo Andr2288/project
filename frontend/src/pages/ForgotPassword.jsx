@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { forgotPassword } from "../api/auth.js";
+import { AlertModal, Modal } from "../components/Modal.jsx";
 import { btnPrimaryClass, fieldClass } from "../components/authStyles.js";
 
 export function ForgotPasswordPage() {
@@ -22,6 +23,10 @@ export function ForgotPasswordPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function closeResult() {
+    setResult(null);
   }
 
   return (
@@ -46,47 +51,65 @@ export function ForgotPasswordPage() {
             disabled={busy}
           />
         </div>
-        {error ? (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        ) : null}
         <button type="submit" className={btnPrimaryClass} disabled={busy || !username.trim()}>
           Запросити скидання
         </button>
       </form>
-
-      {result ? (
-        <div className="mt-6 rounded-lg border border-ms-border bg-ms-white p-4 text-sm text-ms-text shadow-card">
-          <p className="font-medium">{result.message}</p>
-          {result.note ? <p className="mt-2 text-ms-muted">{result.note}</p> : null}
-          {result.reset_token ? (
-            <div className="mt-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-ms-muted">Токен (демо)</p>
-              <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-ms-surface p-2 text-xs">
-                {result.reset_token}
-              </pre>
-              {result.expires_at ? (
-                <p className="mt-2 text-xs text-ms-muted">Дійсний до (серверний час): {result.expires_at}</p>
-              ) : null}
-              <p className="mt-3">
-                <Link
-                  to={`/reset-password?token=${encodeURIComponent(result.reset_token)}`}
-                  className="font-medium text-ms-blue hover:underline"
-                >
-                  Перейти до введення нового пароля
-                </Link>
-              </p>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
 
       <p className="mt-6 text-center text-sm text-ms-muted">
         <Link to="/login" className="font-medium text-ms-blue hover:underline">
           Назад до входу
         </Link>
       </p>
+
+      <AlertModal open={Boolean(error)} message={error || ""} onClose={() => setError(null)} />
+
+      <Modal
+        open={Boolean(result)}
+        onClose={closeResult}
+        title={result?.reset_token ? "Демо: скидання пароля" : "Результат"}
+        size="lg"
+        footer={
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {result?.reset_token ? (
+              <Link
+                to={`/reset-password?token=${encodeURIComponent(result.reset_token)}`}
+                className="text-sm font-medium text-ms-blue hover:underline"
+                onClick={closeResult}
+              >
+                Перейти до нового пароля
+              </Link>
+            ) : (
+              <span />
+            )}
+            <button
+              type="button"
+              className="rounded-md bg-ms-blue px-4 py-2 text-sm font-medium text-white hover:bg-ms-blue-hover"
+              onClick={closeResult}
+            >
+              Зрозуміло
+            </button>
+          </div>
+        }
+      >
+        {result ? (
+          <div className="space-y-3 text-sm text-ms-text">
+            <p className="font-medium">{result.message}</p>
+            {result.note ? <p className="text-ms-muted">{result.note}</p> : null}
+            {result.reset_token ? (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-ms-muted">Токен (демо)</p>
+                <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-ms-border bg-ms-surface p-2 text-xs">
+                  {result.reset_token}
+                </pre>
+                {result.expires_at ? (
+                  <p className="mt-2 text-xs text-ms-muted">Дійсний до (серверний час): {result.expires_at}</p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

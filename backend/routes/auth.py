@@ -57,6 +57,10 @@ def auth_register():
     except sqlite3.IntegrityError:
         return jsonify({"error": "Таке ім'я користувача вже зайняте"}), 409
 
+    from models.lists import ensure_default_list
+
+    ensure_default_list(db, user["id"])
+
     session.clear()
     session["user_id"] = user["id"]
     session.permanent = True

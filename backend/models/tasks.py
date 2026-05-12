@@ -1,21 +1,23 @@
 def _row_to_task(row):
     return {
         "id": row["id"],
+        "list_id": row["list_id"],
         "title": row["title"],
         "is_done": bool(row["is_done"]),
         "created_at": row["created_at"],
     }
 
 
-def list_tasks(db, user_id):
+def list_tasks(db, user_id, list_id):
     cur = db.execute(
         """
-        SELECT id, title, is_done, created_at
-        FROM tasks
-        WHERE user_id = ?
-        ORDER BY id ASC
+        SELECT t.id, t.list_id, t.title, t.is_done, t.created_at
+        FROM tasks t
+        INNER JOIN task_lists l ON l.id = t.list_id AND l.user_id = t.user_id
+        WHERE t.user_id = ? AND t.list_id = ?
+        ORDER BY t.id ASC
         """,
-        (user_id,),
+        (user_id, list_id),
     )
     return [_row_to_task(r) for r in cur.fetchall()]
 
@@ -23,7 +25,7 @@ def list_tasks(db, user_id):
 def get_task_by_id(db, user_id, task_id):
     cur = db.execute(
         """
-        SELECT id, title, is_done, created_at
+        SELECT id, list_id, title, is_done, created_at
         FROM tasks
         WHERE id = ? AND user_id = ?
         """,
@@ -33,10 +35,10 @@ def get_task_by_id(db, user_id, task_id):
     return _row_to_task(row) if row else None
 
 
-def create_task(db, user_id, title):
+def create_task(db, user_id, list_id, title):
     cur = db.execute(
-        "INSERT INTO tasks (user_id, title) VALUES (?, ?)",
-        (user_id, title.strip()),
+        "INSERT INTO tasks (user_id, list_id, title) VALUES (?, ?, ?)",
+        (user_id, list_id, title.strip()),
     )
     db.commit()
     return get_task_by_id(db, user_id, cur.lastrowid)

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../api/auth.js";
+import { AlertModal } from "../components/Modal.jsx";
 import { btnPrimaryClass, fieldClass } from "../components/authStyles.js";
 
 export function ResetPasswordPage() {
@@ -66,16 +67,6 @@ export function ResetPasswordPage() {
             disabled={busy}
           />
         </div>
-        {error ? (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        ) : null}
-        {message ? (
-          <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
-            {message}
-          </div>
-        ) : null}
         <button type="submit" className={btnPrimaryClass} disabled={busy || !token.trim() || !newPassword}>
           Зберегти новий пароль
         </button>
@@ -86,6 +77,15 @@ export function ResetPasswordPage() {
           На сторінку входу
         </Link>
       </p>
+
+      <AlertModal open={Boolean(error)} message={error || ""} onClose={() => setError(null)} />
+      <AlertModal
+        open={Boolean(message)}
+        title="Успіх"
+        message={message || ""}
+        onClose={() => setMessage(null)}
+        variant="success"
+      />
     </div>
   );
 }
