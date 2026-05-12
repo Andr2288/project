@@ -1,11 +1,13 @@
 from flask import jsonify, request, session
 
+from models.activity import log_activity
 from models.database import get_db
 from models.lists import get_list
 from models.tags import tag_belongs_to_user
 from models.tasks import (
     create_task,
     delete_task,
+    get_task_by_id,
     list_tasks,
     normalize_due_date,
     normalize_priority,
@@ -121,6 +123,15 @@ def tasks_create():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
+    lst = get_list(db, uid, list_id)
+    list_nm = lst["name"] if lst else "?"
+    log_activity(
+        db,
+        uid,
+        "task_create",
+        f"Додано задачу «{task['title']}» у список «{list_nm}»",
+    )
+
     return jsonify(task), 201
 
 
@@ -189,6 +200,25 @@ def tasks_patch(task_id):
     if task is None:
         return jsonify({"error": "Задачу не знайдено"}), 404
 
+    parts = []
+    if title is not None:
+        parts.append("назва")
+    if is_done is not None:
+        parts.append("стан виконання")
+    if has_due:
+        parts.append("термін")
+    if has_priority:
+        parts.append("пріоритет")
+    if has_tags:
+        parts.append("теги")
+    detail = ", ".join(parts) if parts else "поля"
+    log_activity(
+        db,
+        uid,
+        "task_update",
+        f"Оновлено задачу «{task['title']}» ({detail})",
+    )
+
     return jsonify(task)
 
 
@@ -196,6 +226,18 @@ def tasks_patch(task_id):
 @login_required
 def tasks_delete(task_id):
     db = get_db()
-    if not delete_task(db, _current_user_id(), task_id):
+    uid = _current_user_id()
+    prev = get_task_by_id(db, uid, task_id)
+    if prev is None:
         return jsonify({"error": "Задачу не знайдено"}), 404
+    lst = get_list(db, uid, prev["list_id"])
+    list_nm = lst["name"] if lst else "?"
+    if not delete_task(db, uid, task_id):
+        return jsonify({"error": "Задачу не знайдено"}), 404
+    log_activity(
+        db,
+        uid,
+        "task_delete",
+        f"Видалено задачу «{prev['title']}» зі списку «{list_nm}»",
+    )
     return "", 204

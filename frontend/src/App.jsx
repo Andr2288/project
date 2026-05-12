@@ -3,6 +3,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { MainLayout } from "./layouts/MainLayout.jsx";
 import { ForgotPasswordPage } from "./pages/ForgotPassword.jsx";
+import { HistoryPage } from "./pages/History.jsx";
 import { Home } from "./pages/Home.jsx";
 import { ListRedirect } from "./pages/ListRedirect.jsx";
 import { LoginPage } from "./pages/Login.jsx";
@@ -25,9 +26,11 @@ function AppHeader() {
           Задачі
         </Link>
         <div className="flex items-center gap-4 text-sm">
-          <span className="hidden text-ms-muted md:inline">Microsoft To Do — стиль</span>
           {loading ? null : user ? (
             <div className="flex items-center gap-3">
+              <Link to="/history" className="font-medium text-ms-blue hover:underline">
+                Історія
+              </Link>
               <span className="text-ms-text">{user.username}</span>
               <button
                 type="button"
@@ -64,6 +67,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/history" element={<HistoryPage />} />
             <Route path="/list/:listId" element={<MainLayout />}>
               <Route index element={<Home />} />
             </Route>

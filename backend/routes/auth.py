@@ -3,6 +3,7 @@ import sqlite3
 from flask import jsonify, request, session
 
 from models.database import get_db
+from models.activity import log_activity
 from models.users import (
     create_user,
     get_user_by_id,
@@ -61,6 +62,8 @@ def auth_register():
 
     ensure_default_list(db, user["id"])
 
+    log_activity(db, user["id"], "register", "Створено обліковий запис")
+
     session.clear()
     session["user_id"] = user["id"]
     session.permanent = True
@@ -83,11 +86,13 @@ def auth_login():
     session.clear()
     session["user_id"] = user["id"]
     session.permanent = True
+    log_activity(db, user["id"], "login", "Вхід у систему")
     return jsonify({"user": user})
-
-
-@api_bp.post("/auth/logout")
 def auth_logout():
+    uid = session.get("user_id")
+    db = get_db()
+    if uid is not None:
+        log_activity(db, int(uid), "logout", "Вихід із системи")
     session.clear()
     return "", 204
 
@@ -116,6 +121,12 @@ def auth_forgot_password():
 
     token = make_reset_token()
     set_reset_token(db, row["id"], token)
+    log_activity(
+        db,
+        row["id"],
+        "password_reset_request",
+        "Запит на скидання пароля (демо, без email)",
+    )
     exp_row = db.execute(
         "SELECT reset_token_expires FROM users WHERE id = ?",
         (row["id"],),
@@ -150,4 +161,5 @@ def auth_reset_password():
         return jsonify({"error": "Токен недійсний або прострочений"}), 400
 
     update_password_clear_reset(db, user_id, new_password)
+    log_activity(db, user_id, "password_reset_done", "Пароль змінено через скидання (демо)")
     return jsonify({"message": "Пароль оновлено. Увійдіть з новим паролем."})

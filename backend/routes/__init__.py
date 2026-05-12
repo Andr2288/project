@@ -4,6 +4,7 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 
 
 def register_blueprints(app):
+    from . import activity  # noqa: F401
     from . import auth  # noqa: F401
     from . import lists  # noqa: F401
     from . import tags  # noqa: F401
