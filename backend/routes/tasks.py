@@ -1,9 +1,10 @@
-from flask import jsonify, request
+from flask import jsonify, request, session
 
 from models.database import get_db
 from models.tasks import create_task, delete_task, list_tasks, update_task
 
 from . import api_bp
+from .decorators import login_required
 
 
 @api_bp.get("/health")
@@ -11,13 +12,19 @@ def health():
     return {"status": "ok"}
 
 
+def _current_user_id():
+    return int(session["user_id"])
+
+
 @api_bp.get("/tasks")
+@login_required
 def tasks_list():
     db = get_db()
-    return jsonify(list_tasks(db))
+    return jsonify(list_tasks(db, _current_user_id()))
 
 
 @api_bp.post("/tasks")
+@login_required
 def tasks_create():
     data = request.get_json(silent=True) or {}
     title = data.get("title", "")
@@ -25,11 +32,12 @@ def tasks_create():
         return jsonify({"error": "Поле title обов'язкове"}), 400
 
     db = get_db()
-    task = create_task(db, title)
+    task = create_task(db, _current_user_id(), title)
     return jsonify(task), 201
 
 
 @api_bp.patch("/tasks/<int:task_id>")
+@login_required
 def tasks_patch(task_id):
     data = request.get_json(silent=True) or {}
     title = data.get("title", None)
@@ -44,7 +52,7 @@ def tasks_patch(task_id):
 
     db = get_db()
     try:
-        task = update_task(db, task_id, title=title, is_done=is_done)
+        task = update_task(db, _current_user_id(), task_id, title=title, is_done=is_done)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -55,8 +63,9 @@ def tasks_patch(task_id):
 
 
 @api_bp.delete("/tasks/<int:task_id>")
+@login_required
 def tasks_delete(task_id):
     db = get_db()
-    if not delete_task(db, task_id):
+    if not delete_task(db, _current_user_id(), task_id):
         return jsonify({"error": "Задачу не знайдено"}), 404
     return "", 204

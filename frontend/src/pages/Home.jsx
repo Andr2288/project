@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { createTask, deleteTask, fetchTasks, patchTask } from "../api/tasks.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import { AddTaskForm } from "../components/AddTaskForm.jsx";
 import { TaskItem } from "../components/TaskItem.jsx";
 
 export function Home() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,11 +19,17 @@ export function Home() {
       const data = await fetchTasks();
       setTasks(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не вдалося завантажити задачі");
+      const msg = e instanceof Error ? e.message : "Не вдалося завантажити задачі";
+      if (msg === "Потрібна авторизація") {
+        await logout();
+        navigate("/login", { replace: true });
+        return;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [logout, navigate]);
 
   useEffect(() => {
     loadTasks();
