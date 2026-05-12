@@ -6,7 +6,7 @@ export function ProtectedRoute() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-ms-muted">
+      <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 text-sm text-ms-muted">
         Перевірка сесії…
       </div>
     );

@@ -1,4 +1,6 @@
-/** Сортування як на бекенді: спочатку з датою (найближчі дедлайни), без дати — в кінці. */
+const PRI_ORDER = { low: 0, medium: 1, high: 2 };
+
+/** Сортування як на бекенді: дедлайн → пріоритет (вищий перший) → id. */
 export function sortTasksLikeApi(tasks) {
   return [...tasks].sort((a, b) => {
     const an = a.due_date == null ? 1 : 0;
@@ -7,6 +9,9 @@ export function sortTasksLikeApi(tasks) {
     if (a.due_date != null && b.due_date != null && a.due_date !== b.due_date) {
       return a.due_date.localeCompare(b.due_date);
     }
+    const ap = PRI_ORDER[a.priority] ?? 1;
+    const bp = PRI_ORDER[b.priority] ?? 1;
+    if (ap !== bp) return bp - ap;
     return a.id - b.id;
   });
 }

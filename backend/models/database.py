@@ -60,6 +60,7 @@ def init_db():
                 title TEXT NOT NULL,
                 is_done INTEGER NOT NULL DEFAULT 0,
                 due_date TEXT,
+                priority INTEGER NOT NULL DEFAULT 1,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (list_id) REFERENCES task_lists(id) ON DELETE CASCADE
@@ -89,4 +90,28 @@ def init_db():
             db.execute("DELETE FROM tasks WHERE list_id IS NULL")
         if "due_date" not in cols:
             db.execute("ALTER TABLE tasks ADD COLUMN due_date TEXT")
+        if "priority" not in cols:
+            db.execute(
+                "ALTER TABLE tasks ADD COLUMN priority INTEGER NOT NULL DEFAULT 1",
+            )
+
+    db.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE (user_id, name)
+        );
+        CREATE TABLE IF NOT EXISTS task_tags (
+            task_id INTEGER NOT NULL,
+            tag_id INTEGER NOT NULL,
+            PRIMARY KEY (task_id, tag_id),
+            FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+        );
+        """,
+    )
     db.commit()

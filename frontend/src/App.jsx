@@ -55,9 +55,9 @@ function AppHeader() {
 
 export default function App() {
   return (
-    <div className="flex min-h-screen flex-col bg-ms-canvas">
+    <div className="flex h-screen max-h-screen flex-col overflow-hidden bg-ms-canvas">
       <AppHeader />
-      <main className="flex flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
