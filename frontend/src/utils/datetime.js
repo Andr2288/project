@@ -1,11 +1,5 @@
-/** SQLite `datetime('now')` — UTC без суфікса; для UI показуємо Europe/Kyiv. */
 const KYIV = "Europe/Kyiv";
 
-/**
- * Парсить рядок з API як UTC, якщо немає явного offset / Z.
- * @param {string|null|undefined} value
- * @returns {Date|null}
- */
 export function parseServerUtc(value) {
   if (value == null || value === "") return null;
   const s = String(value).trim();
@@ -34,14 +28,12 @@ export function formatDateTimeKyiv(value) {
   });
 }
 
-/** Атрибут dateTime для <time> — повний ISO в UTC. */
 export function toIsoUtcAttribute(value) {
   const d = parseServerUtc(value);
   if (!d || Number.isNaN(d.getTime())) return undefined;
   return d.toISOString();
 }
 
-/** Поточна календарна дата в Києві (YYYY-MM-DD) для порівняння з due_date. */
 export function todayISO() {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: KYIV,
@@ -53,7 +45,6 @@ export function todayISO() {
   return `${p("year")}-${p("month")}-${p("day")}`;
 }
 
-/** Календарний due_date (YYYY-MM-DD) українською, у часовій зоні Києва. */
 export function formatDueUk(iso) {
   if (!iso) return "";
   const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);

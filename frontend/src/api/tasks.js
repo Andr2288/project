@@ -1,9 +1,5 @@
 import { base, fetchDefaults, parseResponse } from "./client.js";
 
-/**
- * @param {number} listId
- * @param {{ q?: string; status?: string; tagId?: number | null }} [filters]
- */
 export function fetchTasks(listId, filters = {}) {
   const q = new URLSearchParams({ list_id: String(listId) });
   const trimmed = filters.q?.trim();

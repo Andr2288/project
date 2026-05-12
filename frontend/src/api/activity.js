@@ -1,9 +1,5 @@
 import { base, fetchDefaults, parseResponse } from "./client.js";
 
-/**
- * @param {{ date?: string; q?: string }} [filters]
- * `date` — один день РРРР-ММ-ДД; якщо не передано, API повертає останні записи без обмеження датою.
- */
 export function fetchActivity(filters = {}) {
   const params = new URLSearchParams();
   if (filters.date) params.set("date", filters.date);

@@ -102,9 +102,6 @@ def auth_logout():
 
 @api_bp.post("/auth/forgot-password")
 def auth_forgot_password():
-    """
-    Демо: токен повертається в JSON замість листа.
-    """
     data = request.get_json(silent=True) or {}
     username = data.get("username", "")
     if not isinstance(username, str) or not username.strip():

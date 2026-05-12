@@ -26,7 +26,6 @@ export function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  /** Обраний календарний день (РРРР-ММ-ДД); порожньо — усі записи в межах ліміту API */
   const [day, setDay] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");

@@ -18,13 +18,6 @@ function parseTagsInput(raw) {
     .filter(Boolean);
 }
 
-/**
- * @param {object} props
- * @param {boolean} props.open
- * @param {() => void} props.onClose
- * @param {(title: string, dueDate: string | null, priority: string, tags: string[]) => Promise<boolean>} props.onAdd
- * @param {boolean} props.disabled
- */
 export function AddTaskModal({ open, onClose, onAdd, disabled }) {
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");

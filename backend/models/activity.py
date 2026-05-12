@@ -28,10 +28,6 @@ def _validate_day(value):
 
 
 def _kyiv_day_utc_bounds(day_str: str) -> tuple[str, str]:
-    """
-    Межі [start, end) у UTC як рядки YYYY-MM-DD HH:MM:SS (як у SQLite datetime('now')).
-    day_str — календарна дата в Europe/Kyiv (відповідає фільтру на фронті та показу часу).
-    """
     try:
         d = datetime.strptime(day_str, "%Y-%m-%d").date()
     except ValueError:
@@ -47,11 +43,6 @@ def _kyiv_day_utc_bounds(day_str: str) -> tuple[str, str]:
 
 
 def list_user_activity(db, user_id, day=None, search=None, limit=_DEFAULT_LIMIT):
-    """
-    day — один календарний день (РРРР-ММ-ДД) у часовій зоні Europe/Kyiv; якщо None — усі записи (у межах limit).
-    created_at у БД — UTC; фільтр узгоджений із київською добою.
-    search — підрядок у summary без урахування регістру.
-    """
     day = _validate_day(day)
 
     lim = int(limit) if limit is not None else _DEFAULT_LIMIT

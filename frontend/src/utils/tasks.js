@@ -4,7 +4,6 @@ const PRI_ORDER = { low: 0, medium: 1, high: 2 };
 
 export { formatDueUk, todayISO } from "./datetime.js";
 
-/** Сортування як на бекенді: дедлайн → пріоритет (вищий перший) → id. */
 export function sortTasksLikeApi(tasks) {
   return [...tasks].sort((a, b) => {
     const an = a.due_date == null ? 1 : 0;

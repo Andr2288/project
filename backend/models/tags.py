@@ -71,10 +71,6 @@ def tags_for_task_ids(db, user_id, task_ids):
 
 
 def replace_task_tags(db, user_id, task_id, tag_names):
-    """
-    tag_names: iterable of raw strings; duplicates normalized to one.
-    Повністю замінює набір тегів задачі.
-    """
     row = db.execute(
         "SELECT id FROM tasks WHERE id = ? AND user_id = ?",
         (task_id, user_id),
