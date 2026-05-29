@@ -10,23 +10,16 @@ from routes import register_blueprints
 
 load_dotenv()
 
-_DEV_ORIGINS = (
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-)
-
 
 def create_app():
     app = Flask(__name__)
     cfg = get_config()
     app.config.from_object(cfg)
-    app.config.setdefault("SESSION_COOKIE_SAMESITE", "Lax")
     app.config.setdefault("SESSION_COOKIE_HTTPONLY", True)
-    app.config.setdefault("SESSION_COOKIE_SECURE", False)
 
     CORS(
         app,
-        resources={r"/api/*": {"origins": list(_DEV_ORIGINS)}},
+        resources={r"/api/*": {"origins": cfg.CORS_ORIGINS}},
         supports_credentials=True,
     )
 

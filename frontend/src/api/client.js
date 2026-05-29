@@ -1,4 +1,10 @@
-const base = import.meta.env.DEV ? "" : "http://127.0.0.1:5000";
+function normalizeBaseUrl(url) {
+  return typeof url === "string" ? url.replace(/\/+$/, "") : "";
+}
+
+const base = import.meta.env.DEV
+  ? ""
+  : normalizeBaseUrl(import.meta.env.VITE_API_URL);
 
 export const fetchDefaults = {
   credentials: "include",
